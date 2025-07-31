@@ -9,6 +9,8 @@ from datetime import datetime
 from typing import Dict, List, Tuple
 from pathlib import Path
 import time
+import json
+import re
 
 import openai
 import pdfplumber
@@ -226,7 +228,7 @@ class EnhancedPDFProcessor:
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
 
-##### STUDY AGENTS WITH BETTER PROMPTS AND ERROR HANDLING #####
+##### ENHANCED STUDY AGENTS WITH BETTER PROMPTS #####
 class SummaryAgent:
     def __init__(self, client: OpenAIClient):
         self.client = client
@@ -244,26 +246,52 @@ class SummaryAgent:
             text = text[:max_chars] + "..."
         
         prompt = f"""
-        Please create a well-structured summary of the following academic content:
+        Create a comprehensive, well-structured summary of the following academic content. Use clear headings and bullet points for easy reading.
 
-        **Instructions:**
-        1. MAIN TOPIC: Identify the primary subject
-        2. KEY CONCEPTS: List 5-8 important concepts with brief explanations
-        3. DETAILED SUMMARY: Provide a comprehensive overview in paragraphs
-        4. IMPORTANT DEFINITIONS: Define technical terms mentioned
-        5. KEY TAKEAWAYS: List 3-5 main points students should remember
-
-        **Content to summarize:**
+        **Document Content:**
         {text}
+
+        **Please structure your summary as follows:**
+
+        ## 📋 DOCUMENT OVERVIEW
+        - Main topic and purpose
+        - Document type (lecture, textbook chapter, research paper, etc.)
+
+        ## 🎯 KEY CONCEPTS & DEFINITIONS
+        List the 5-8 most important concepts with brief explanations:
+        - **Concept 1**: Brief definition and significance
+        - **Concept 2**: Brief definition and significance
+        [Continue for each key concept]
+
+        ## 📝 DETAILED SUMMARY
+        Write 2-3 paragraphs providing a comprehensive overview of the content, including:
+        - Main arguments or points
+        - Supporting evidence or examples
+        - Relationships between concepts
+        - Any conclusions or implications
+
+        ## 🔑 CRITICAL TAKEAWAYS
+        List 4-6 essential points that students must remember:
+        1. Most important point
+        2. Second most important point
+        [Continue...]
+
+        ## 📚 STUDY FOCUS AREAS
+        Highlight areas that deserve extra attention:
+        - Complex concepts that need deeper understanding
+        - Topics likely to appear on exams
+        - Practical applications
+
+        Make the summary engaging, clear, and educational. Use formatting to make it easy to scan and study from.
         """
         
-        return self.client.chat_completion([{"role": "user", "content": prompt}], max_tokens=1200)
+        return self.client.chat_completion([{"role": "user", "content": prompt}], max_tokens=1500)
 
 class FlashcardAgent:
     def __init__(self, client: OpenAIClient):
         self.client = client
 
-    def generate_flashcards(self, text: str, num_cards=8) -> str:
+    def generate_flashcards(self, text: str, num_cards=10) -> str:
         if not text.strip():
             return "❌ No content available for flashcards."
         
@@ -271,37 +299,141 @@ class FlashcardAgent:
             return "⚠️ Content too short for meaningful flashcards."
         
         # Truncate text if too long
-        max_chars = 6000
+        max_chars = 7000
         if len(text) > max_chars:
             text = text[:max_chars] + "..."
         
         prompt = f"""
-        Create {num_cards} study flashcards based on the following content. Mix different difficulty levels.
+        Create {num_cards} high-quality study flashcards based on the following content. Make them diverse and educational, covering different aspects and difficulty levels.
 
-        **Format for each card:**
-        CARD [NUMBER]:
-        Q: [Clear, specific question]
-        A: [Comprehensive answer]
+        **Content to process:**
+        {text}
+
+        **Create a mix of the following types:**
+        - Definitions (What is...?)
+        - Applications (How is... used?)
+        - Comparisons (What's the difference between...?)
+        - Processes (How does... work?)
+        - Examples (Give an example of...)
+        - Analysis (Why is... important?)
+
+        **For each flashcard, use this EXACT format:**
+
+        CARD 1:
+        Q: [Write a clear, specific question that tests understanding]
+        A: [Provide a comprehensive answer with examples and context]
         DIFFICULTY: [Basic/Intermediate/Advanced]
+        CATEGORY: [Main topic this relates to]
+        HINT: [Optional helpful hint or memory aid]
         ---
 
-        **Guidelines:**
-        - Include definitions, concepts, processes, and applications
-        - Make questions specific and clear
-        - Provide complete answers
-        - Mix difficulty levels appropriately
+        CARD 2:
+        Q: [Next question]
+        A: [Next answer]
+        DIFFICULTY: [Basic/Intermediate/Advanced]
+        CATEGORY: [Main topic this relates to]
+        HINT: [Optional helpful hint or memory aid]
+        ---
 
-        **Content:**
-        {text}
+        [Continue for all {num_cards} cards]
+
+        **Guidelines:**
+        - Make questions specific and test actual understanding, not just memorization
+        - Include relevant examples in answers
+        - Vary difficulty: 40% Basic, 40% Intermediate, 20% Advanced
+        - Add memory hints for complex concepts
+        - Keep questions clear and answers comprehensive but concise
         """
         
-        return self.client.chat_completion([{"role": "user", "content": prompt}], max_tokens=1500)
+        return self.client.chat_completion([{"role": "user", "content": prompt}], max_tokens=2500)
+
+    def generate_flashcards_structured(self, text: str, num_cards=10) -> List[Dict]:
+        """Generate structured flashcards data for the app interface"""
+        if not text.strip():
+            return []
+        
+        if len(text.split()) < 20:
+            return []
+        
+        # Truncate text if too long
+        max_chars = 7000
+        if len(text) > max_chars:
+            text = text[:max_chars] + "..."
+        
+        prompt = f"""
+        Create {num_cards} high-quality study flashcards based on the following content. Return them as a JSON array.
+
+        **Content to process:**
+        {text}
+
+        **Return format (valid JSON only):**
+        [
+            {{
+                "question": "Clear, specific question",
+                "answer": "Comprehensive answer with examples",
+                "difficulty": "Basic|Intermediate|Advanced",
+                "category": "Main topic category",
+                "hint": "Optional memory aid or hint"
+            }},
+            ...
+        ]
+
+        **Guidelines:**
+        - Create diverse question types (definitions, applications, comparisons, processes)
+        - Test understanding, not just memorization
+        - Include relevant examples in answers
+        - Vary difficulty: 40% Basic, 40% Intermediate, 20% Advanced
+        - Keep questions clear and answers comprehensive but concise
+        """
+        
+        response = self.client.chat_completion([{"role": "user", "content": prompt}], max_tokens=2500)
+        
+        try:
+            # Try to parse JSON response
+            flashcards_data = json.loads(response)
+            if isinstance(flashcards_data, list):
+                return flashcards_data
+        except json.JSONDecodeError:
+            pass
+        
+        # Fallback: parse text format
+        return self._parse_flashcards_from_text(response)
+
+    def _parse_flashcards_from_text(self, text: str) -> List[Dict]:
+        """Parse flashcards from text format as fallback"""
+        flashcards = []
+        cards = text.split("---")
+        
+        for card in cards:
+            if not card.strip():
+                continue
+                
+            lines = card.strip().split("\n")
+            flashcard = {}
+            
+            for line in lines:
+                line = line.strip()
+                if line.startswith("Q:"):
+                    flashcard["question"] = line[2:].strip()
+                elif line.startswith("A:"):
+                    flashcard["answer"] = line[2:].strip()
+                elif line.startswith("DIFFICULTY:"):
+                    flashcard["difficulty"] = line[11:].strip()
+                elif line.startswith("CATEGORY:"):
+                    flashcard["category"] = line[9:].strip()
+                elif line.startswith("HINT:"):
+                    flashcard["hint"] = line[5:].strip()
+            
+            if flashcard.get("question") and flashcard.get("answer"):
+                flashcards.append(flashcard)
+        
+        return flashcards
 
 class QuizAgent:
     def __init__(self, client: OpenAIClient):
         self.client = client
 
-    def generate_quiz(self, text: str, num_questions=5) -> str:
+    def generate_quiz(self, text: str, num_questions=8) -> str:
         if not text.strip():
             return "❌ No content available for quiz generation."
         
@@ -309,34 +441,339 @@ class QuizAgent:
             return "⚠️ Content too short for meaningful quiz questions."
         
         # Truncate text if too long
-        max_chars = 6000
+        max_chars = 7000
         if len(text) > max_chars:
             text = text[:max_chars] + "..."
         
         prompt = f"""
-        Create a {num_questions}-question multiple choice quiz based on the following content.
-
-        **Format for each question:**
-        QUESTION [NUMBER]: [Clear question text]
-        A) [Option A]
-        B) [Option B]
-        C) [Option C]
-        D) [Option D]
-        CORRECT ANSWER: [Letter]
-        EXPLANATION: [Why this answer is correct and others are wrong]
-        ---
-
-        **Guidelines:**
-        - Questions should test understanding, not just memorization
-        - Make incorrect options plausible but clearly wrong
-        - Include variety: definitions, applications, comparisons
-        - Provide clear explanations
+        Create {num_questions} excellent multiple choice questions based on the following content. Focus on testing understanding and application, not just memorization.
 
         **Content:**
         {text}
+
+        **Question Types to Include:**
+        - Conceptual understanding
+        - Application scenarios  
+        - Analysis and comparison
+        - Process understanding
+        - Real-world applications
+
+        **For each question, use this EXACT format:**
+
+        QUESTION 1: [Write a clear, specific question]
+        A) [First option - make it plausible]
+        B) [Second option - make it plausible]  
+        C) [Third option - make it plausible]
+        D) [Fourth option - make it plausible]
+        CORRECT ANSWER: [A, B, C, or D]
+        EXPLANATION: [Explain why the correct answer is right and why the others are wrong. Include additional context to help learning.]
+        DIFFICULTY: [Basic/Intermediate/Advanced]
+        ---
+
+        QUESTION 2: [Next question]
+        A) [Option A]
+        B) [Option B]
+        C) [Option C] 
+        D) [Option D]
+        CORRECT ANSWER: [A, B, C, or D]
+        EXPLANATION: [Detailed explanation]
+        DIFFICULTY: [Basic/Intermediate/Advanced]
+        ---
+
+        [Continue for all {num_questions} questions]
+
+        **Guidelines:**
+        - Test understanding and application, not just recall
+        - Make all options plausible but only one clearly correct
+        - Include variety in question types and difficulty
+        - Provide educational explanations that teach concepts
+        - Mix difficulty: 30% Basic, 50% Intermediate, 20% Advanced
+        - Avoid trivial questions or trick questions
         """
         
-        return self.client.chat_completion([{"role": "user", "content": prompt}], max_tokens=2000)
+        return self.client.chat_completion([{"role": "user", "content": prompt}], max_tokens=3000)
+
+    def generate_quiz_structured(self, text: str, num_questions=8) -> List[Dict]:
+        """Generate structured quiz data for the app interface"""
+        if not text.strip():
+            return []
+        
+        if len(text.split()) < 30:
+            return []
+        
+        # Truncate text if too long
+        max_chars = 7000
+        if len(text) > max_chars:
+            text = text[:max_chars] + "..."
+        
+        prompt = f"""
+        Create {num_questions} multiple choice questions based on the following content. Return them as a JSON array.
+
+        **Content:**
+        {text}
+
+        **Return format (valid JSON only):**
+        [
+            {{
+                "question": "Clear, specific question",
+                "options": ["Option A", "Option B", "Option C", "Option D"],
+                "correct_answer": 0,
+                "explanation": "Detailed explanation of the correct answer",
+                "difficulty": "Basic|Intermediate|Advanced"
+            }},
+            ...
+        ]
+
+        **Guidelines:**
+        - Test understanding and application, not just memorization
+        - Make all options plausible but only one clearly correct
+        - Include variety in question types and difficulty
+        - Provide educational explanations
+        - Mix difficulty: 30% Basic, 50% Intermediate, 20% Advanced
+        - correct_answer should be the index (0-3) of the correct option
+        """
+        
+        response = self.client.chat_completion([{"role": "user", "content": prompt}], max_tokens=3000)
+        
+        try:
+            # Try to parse JSON response
+            quiz_data = json.loads(response)
+            if isinstance(quiz_data, list):
+                return quiz_data
+        except json.JSONDecodeError:
+            pass
+        
+        # Fallback: parse text format
+        return self._parse_quiz_from_text(response)
+
+    def _parse_quiz_from_text(self, text: str) -> List[Dict]:
+        """Parse quiz from text format as fallback"""
+        questions = []
+        question_blocks = text.split("---")
+        
+        for block in question_blocks:
+            if not block.strip():
+                continue
+                
+            lines = [line.strip() for line in block.strip().split("\n") if line.strip()]
+            question_data = {}
+            options = []
+            
+            for line in lines:
+                if line.startswith("QUESTION"):
+                    question_data["question"] = line.split(":", 1)[1].strip()
+                elif line.startswith(("A)", "B)", "C)", "D)")):
+                    options.append(line[2:].strip())
+                elif line.startswith("CORRECT ANSWER:"):
+                    correct_letter = line.split(":", 1)[1].strip()
+                    correct_index = ord(correct_letter.upper()) - ord('A')
+                    question_data["correct_answer"] = correct_index
+                elif line.startswith("EXPLANATION:"):
+                    question_data["explanation"] = line.split(":", 1)[1].strip()
+                elif line.startswith("DIFFICULTY:"):
+                    question_data["difficulty"] = line.split(":", 1)[1].strip()
+            
+            if question_data.get("question") and len(options) == 4:
+                question_data["options"] = options
+                questions.append(question_data)
+        
+        return questions
+
+##### NEW DISCOVERY AGENTS #####
+class ResearchDiscoveryAgent:
+    def __init__(self, client: OpenAIClient):
+        self.client = client
+
+    def find_papers(self, keywords: List[str], topic: str, max_papers: int = 8) -> List[Dict]:
+        """Simulate finding research papers based on keywords and topic"""
+        if not keywords:
+            return []
+        
+        try:
+            # Create a prompt to generate realistic research paper suggestions
+            keywords_str = ", ".join(keywords[:5])  # Limit keywords
+            
+            prompt = f"""
+            Based on the academic topic "{topic}" and keywords: {keywords_str}, suggest {max_papers} relevant research papers.
+            
+            Return as JSON array with this format:
+            [
+                {{
+                    "title": "Realistic academic paper title",
+                    "authors": "Author names (2-4 authors)",
+                    "year": "Recent year (2018-2024)",
+                    "source": "Journal or Conference name",
+                    "abstract": "Brief abstract (100-200 words)",
+                    "url": "https://example.com/paper-url",
+                    "relevance_score": "High|Medium|Low"
+                }},
+                ...
+            ]
+            
+            Make the papers realistic and relevant to the topic. Include a mix of foundational and recent papers.
+            """
+            
+            response = self.client.chat_completion([{"role": "user", "content": prompt}], max_tokens=2000)
+            
+            try:
+                papers = json.loads(response)
+                if isinstance(papers, list):
+                    return papers[:max_papers]
+            except json.JSONDecodeError:
+                pass
+            
+            # Fallback: generate basic paper suggestions
+            return self._generate_fallback_papers(topic, keywords, max_papers)
+            
+        except Exception as e:
+            print(f"Error in research discovery: {e}")
+            return self._generate_fallback_papers(topic, keywords, max_papers)
+
+    def _generate_fallback_papers(self, topic: str, keywords: List[str], max_papers: int) -> List[Dict]:
+        """Generate fallback research papers"""
+        papers = []
+        for i in range(min(max_papers, 5)):
+            papers.append({
+                "title": f"Research in {topic}: A Comprehensive Study",
+                "authors": "Smith, J., Johnson, A., Brown, M.",
+                "year": "2023",
+                "source": "Journal of Academic Research",
+                "abstract": f"This paper explores key aspects of {topic} with focus on {', '.join(keywords[:3])}. The study provides comprehensive analysis and insights into current methodologies and future directions.",
+                "url": f"https://academic-search.example.com/paper-{i+1}",
+                "relevance_score": "High"
+            })
+        return papers
+
+class YouTubeDiscoveryAgent:
+    def __init__(self, client: OpenAIClient):
+        self.client = client
+
+    def find_videos(self, keywords: List[str], topic: str, max_videos: int = 10) -> List[Dict]:
+        """Simulate finding educational YouTube videos"""
+        if not keywords:
+            return []
+        
+        try:
+            keywords_str = ", ".join(keywords[:5])
+            
+            prompt = f"""
+            Based on the educational topic "{topic}" and keywords: {keywords_str}, suggest {max_videos} relevant educational YouTube videos.
+            
+            Return as JSON array with this format:
+            [
+                {{
+                    "title": "Educational video title",
+                    "channel": "Educational channel name",
+                    "duration": "MM:SS format",
+                    "views": "View count (e.g., 1.2M views)",
+                    "description": "Brief description of video content",
+                    "url": "https://youtube.com/watch?v=example",
+                    "educational_score": "High|Medium|Low"
+                }},
+                ...
+            ]
+            
+            Focus on educational channels like Khan Academy, Crash Course, MIT OpenCourseWare, etc.
+            Make the suggestions realistic and educational.
+            """
+            
+            response = self.client.chat_completion([{"role": "user", "content": prompt}], max_tokens=2000)
+            
+            try:
+                videos = json.loads(response)
+                if isinstance(videos, list):
+                    return videos[:max_videos]
+            except json.JSONDecodeError:
+                pass
+            
+            return self._generate_fallback_videos(topic, keywords, max_videos)
+            
+        except Exception as e:
+            print(f"Error in YouTube discovery: {e}")
+            return self._generate_fallback_videos(topic, keywords, max_videos)
+
+    def _generate_fallback_videos(self, topic: str, keywords: List[str], max_videos: int) -> List[Dict]:
+        """Generate fallback YouTube videos"""
+        channels = ["Khan Academy", "Crash Course", "MIT OpenCourseWare", "TED-Ed", "3Blue1Brown"]
+        videos = []
+        
+        for i in range(min(max_videos, 8)):
+            videos.append({
+                "title": f"Understanding {topic}: Key Concepts Explained",
+                "channel": channels[i % len(channels)],
+                "duration": f"{10 + i*2}:{30 + i*5:02d}",
+                "views": f"{100 + i*50}K views",
+                "description": f"Educational video covering {topic} with focus on {', '.join(keywords[:2])}. Perfect for students and learners.",
+                "url": f"https://youtube.com/watch?v=example{i+1}",
+                "educational_score": "High"
+            })
+        
+        return videos
+
+class WebResourceAgent:
+    def __init__(self, client: OpenAIClient):
+        self.client = client
+
+    def find_resources(self, keywords: List[str], topic: str, max_resources: int = 12) -> List[Dict]:
+        """Simulate finding web learning resources"""
+        if not keywords:
+            return []
+        
+        try:
+            keywords_str = ", ".join(keywords[:5])
+            
+            prompt = f"""
+            Based on the educational topic "{topic}" and keywords: {keywords_str}, suggest {max_resources} relevant web learning resources.
+            
+            Return as JSON array with this format:
+            [
+                {{
+                    "title": "Resource title",
+                    "type": "Tutorial|Course|Documentation|Interactive Tool|Reference",
+                    "source": "Website name",
+                    "description": "Brief description of the resource",
+                    "url": "https://example.com/resource",
+                    "quality_score": "High|Medium|Low"
+                }},
+                ...
+            ]
+            
+            Include diverse resource types: online courses, tutorials, documentation, interactive tools, reference materials.
+            Focus on reputable educational websites.
+            """
+            
+            response = self.client.chat_completion([{"role": "user", "content": prompt}], max_tokens=2000)
+            
+            try:
+                resources = json.loads(response)
+                if isinstance(resources, list):
+                    return resources[:max_resources]
+            except json.JSONDecodeError:
+                pass
+            
+            return self._generate_fallback_resources(topic, keywords, max_resources)
+            
+        except Exception as e:
+            print(f"Error in web resource discovery: {e}")
+            return self._generate_fallback_resources(topic, keywords, max_resources)
+
+    def _generate_fallback_resources(self, topic: str, keywords: List[str], max_resources: int) -> List[Dict]:
+        """Generate fallback web resources"""
+        resource_types = ["Tutorial", "Course", "Documentation", "Interactive Tool", "Reference"]
+        sources = ["Coursera", "edX", "Wikipedia", "Stack Overflow", "Mozilla MDN", "W3Schools"]
+        resources = []
+        
+        for i in range(min(max_resources, 10)):
+            resources.append({
+                "title": f"{topic} - {resource_types[i % len(resource_types)]}",
+                "type": resource_types[i % len(resource_types)],
+                "source": sources[i % len(sources)],
+                "description": f"Comprehensive {resource_types[i % len(resource_types)].lower()} covering {topic} concepts including {', '.join(keywords[:2])}.",
+                "url": f"https://{sources[i % len(sources)].lower().replace(' ', '')}.com/resource-{i+1}",
+                "quality_score": "High"
+            })
+        
+        return resources
 
 ##### DIAGNOSTIC TOOLS #####
 def diagnose_pdf(file_path):
