@@ -1,5 +1,6 @@
 import React from 'react';
-import { HelpCircle, ChevronLeft, ChevronRight, CheckCircle, XCircle, Trophy, RotateCcw } from 'lucide-react';
+import { HelpCircle, ChevronLeft, ChevronRight, CheckCircle, XCircle, Trophy, RotateCcw, Target } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../contexts/AppContext';
 import { LoadingSpinner } from './LoadingSpinner';
 
@@ -105,77 +106,109 @@ export function QuizTab() {
 
   if (quizState.completed) {
     const scorePercentage = Math.round((quizState.score / quiz.length) * 100);
-    const getScoreMessage = () => {
-      if (scorePercentage >= 90) return { message: "Excellent work!", icon: "🌟", color: "text-green-600" };
-      if (scorePercentage >= 70) return { message: "Good job!", icon: "👍", color: "text-blue-600" };
-      if (scorePercentage >= 50) return { message: "Keep studying!", icon: "📚", color: "text-yellow-600" };
-      return { message: "Don't give up!", icon: "💪", color: "text-red-600" };
+    const getScoreInfo = () => {
+      if (scorePercentage >= 90) return { message: "Excellent work!", icon: "🌟", color: "text-green-600", bgColor: "from-green-500 to-green-600" };
+      if (scorePercentage >= 70) return { message: "Good job!", icon: "👍", color: "text-blue-600", bgColor: "from-blue-500 to-blue-600" };
+      if (scorePercentage >= 50) return { message: "Keep studying!", icon: "📚", color: "text-yellow-600", bgColor: "from-yellow-500 to-yellow-600" };
+      return { message: "Don't give up!", icon: "💪", color: "text-red-600", bgColor: "from-red-500 to-red-600" };
     };
 
-    const scoreInfo = getScoreMessage();
+    const scoreInfo = getScoreInfo();
 
     return (
-      <div className="text-center py-12">
+      <motion.div 
+        className="text-center py-12"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+      >
         <div className="max-w-md mx-auto">
-          <div className="w-20 h-20 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Trophy className="w-10 h-10 text-white" />
-          </div>
+          <motion.div
+            className={`w-24 h-24 bg-gradient-to-r ${scoreInfo.bgColor} rounded-full flex items-center justify-center mx-auto mb-8`}
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", bounce: 0.5 }}
+          >
+            <Trophy className="w-12 h-12 text-white" />
+          </motion.div>
           
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+          <motion.h2 
+            className="text-3xl font-bold text-gray-900 dark:text-white mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
             Quiz Completed!
-          </h2>
+          </motion.h2>
           
-          <div className="card p-6 mb-6">
-            <div className="text-4xl font-bold text-primary-600 mb-2">
+          <motion.div 
+            className="card p-8 mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <div className="text-5xl font-bold text-primary-600 mb-2">
               {quizState.score}/{quiz.length}
             </div>
-            <div className="text-2xl font-semibold text-gray-700 dark:text-gray-300 mb-4">
+            <div className="text-3xl font-semibold text-gray-700 dark:text-gray-300 mb-4">
               {scorePercentage}%
             </div>
-            <div className={`text-lg ${scoreInfo.color} font-medium`}>
+            <div className={`text-xl ${scoreInfo.color} font-medium`}>
               {scoreInfo.icon} {scoreInfo.message}
             </div>
-          </div>
+          </motion.div>
 
-          <button
+          <motion.button
             onClick={handleReset}
-            className="btn-primary inline-flex items-center space-x-2"
+            className="btn-primary inline-flex items-center space-x-2 text-lg px-8 py-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-5 h-5" />
             <span>Retake Quiz</span>
-          </button>
+          </motion.button>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   const selectedAnswer = quizState.answers[quizState.currentQuestion];
   const isAnswered = selectedAnswer !== undefined;
   const isCorrect = isAnswered && selectedAnswer === currentQuestion.options[currentQuestion.correct_answer];
+  const answeredCount = Object.keys(quizState.answers).length;
+  const scorePercentage = answeredCount > 0 ? Math.round((quizState.score / answeredCount) * 100) : 0;
 
   return (
-    <div className="space-y-6">
+    <motion.div 
+      className="space-y-8"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       {/* Progress and Score */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
-            <HelpCircle className="w-5 h-5 text-primary-500" />
-            <span className="text-lg font-semibold text-gray-900 dark:text-white">
+            <HelpCircle className="w-6 h-6 text-primary-500" />
+            <span className="text-xl font-bold text-gray-900 dark:text-white">
               Question {quizState.currentQuestion + 1} of {quiz.length}
             </span>
           </div>
           
-          <div className="flex items-center space-x-2 px-3 py-1 bg-primary-50 dark:bg-primary-900 rounded-full">
+          <div className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 rounded-full">
             <Trophy className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-            <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
-              Score: {quizState.score}/{Object.keys(quizState.answers).length}
+            <span className="text-sm font-semibold text-primary-700 dark:text-primary-300">
+              Score: {quizState.score}/{answeredCount} ({scorePercentage}%)
             </span>
           </div>
         </div>
 
         <button
           onClick={handleReset}
-          className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+          className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors btn-outline"
         >
           <RotateCcw className="w-4 h-4" />
           <span>Reset</span>
@@ -183,26 +216,39 @@ export function QuizTab() {
       </div>
 
       {/* Progress Bar */}
-      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-        <div
-          className="bg-gradient-to-r from-primary-500 to-primary-600 h-2 rounded-full transition-all duration-300"
-          style={{ width: `${((quizState.currentQuestion + 1) / quiz.length) * 100}%` }}
+      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+        <motion.div
+          className="bg-gradient-to-r from-primary-500 to-primary-600 h-3 rounded-full"
+          initial={{ width: 0 }}
+          animate={{ width: `${((quizState.currentQuestion + 1) / quiz.length) * 100}%` }}
+          transition={{ duration: 0.5 }}
         />
       </div>
 
       {/* Question */}
-      <div className="card p-6">
-        <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-6 leading-relaxed">
-          {currentQuestion?.question}
-        </h3>
+      <motion.div 
+        className="card p-8"
+        key={quizState.currentQuestion}
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="flex items-start space-x-4 mb-8">
+          <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Target className="w-6 h-6 text-white" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white leading-relaxed">
+            {currentQuestion?.question}
+          </h3>
+        </div>
 
         {/* Options */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           {currentQuestion?.options.map((option, index) => {
             const isSelected = selectedAnswer === option;
             const isCorrectOption = index === currentQuestion.correct_answer;
             
-            let optionClass = "w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ";
+            let optionClass = "w-full text-left p-6 rounded-xl border-2 transition-all duration-200 ";
             
             if (quizState.showExplanation) {
               if (isCorrectOption) {
@@ -221,69 +267,106 @@ export function QuizTab() {
             }
 
             return (
-              <button
+              <motion.button
                 key={index}
                 onClick={() => !quizState.showExplanation && handleAnswerSelect(option)}
                 disabled={quizState.showExplanation}
                 className={optionClass}
+                whileHover={!quizState.showExplanation ? { scale: 1.02 } : {}}
+                whileTap={!quizState.showExplanation ? { scale: 0.98 } : {}}
               >
                 <div className="flex items-center justify-between">
-                  <span>{option}</span>
-                  {quizState.showExplanation && (
-                    <div className="flex items-center space-x-2">
-                      {isCorrectOption && <CheckCircle className="w-5 h-5 text-green-500" />}
-                      {isSelected && !isCorrectOption && <XCircle className="w-5 h-5 text-red-500" />}
-                    </div>
-                  )}
+                  <span className="text-lg">{option}</span>
+                  <AnimatePresence>
+                    {quizState.showExplanation && (
+                      <motion.div 
+                        className="flex items-center space-x-2"
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0 }}
+                      >
+                        {isCorrectOption && <CheckCircle className="w-6 h-6 text-green-500" />}
+                        {isSelected && !isCorrectOption && <XCircle className="w-6 h-6 text-red-500" />}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              </button>
+              </motion.button>
             );
           })}
         </div>
 
         {/* Submit Button */}
-        {!quizState.showExplanation && (
-          <div className="mt-6">
-            <button
-              onClick={handleSubmitAnswer}
-              disabled={!isAnswered}
-              className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+        <AnimatePresence>
+          {!quizState.showExplanation && (
+            <motion.div 
+              className="mt-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
             >
-              Submit Answer
-            </button>
-          </div>
-        )}
+              <button
+                onClick={handleSubmitAnswer}
+                disabled={!isAnswered}
+                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-lg px-8 py-4"
+              >
+                Submit Answer
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Explanation */}
-        {quizState.showExplanation && currentQuestion.explanation && (
-          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Explanation:</h4>
-            <p className="text-blue-800 dark:text-blue-200">{currentQuestion.explanation}</p>
-          </div>
-        )}
-      </div>
+        <AnimatePresence>
+          {quizState.showExplanation && currentQuestion.explanation && (
+            <motion.div 
+              className="mt-8 p-6 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-3 flex items-center space-x-2">
+                <HelpCircle className="w-5 h-5" />
+                <span>Explanation</span>
+              </h4>
+              <p className="text-blue-800 dark:text-blue-200 leading-relaxed">
+                {currentQuestion.explanation}
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
 
       {/* Navigation */}
       <div className="flex items-center justify-between">
-        <button
+        <motion.button
           onClick={handlePrevious}
           disabled={quizState.currentQuestion === 0}
-          className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center space-x-2 px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-5 h-5" />
           <span>Previous</span>
-        </button>
+        </motion.button>
 
-        {quizState.showExplanation && (
-          <button
-            onClick={handleNext}
-            className="flex items-center space-x-2 btn-primary"
-          >
-            <span>{quizState.currentQuestion === quiz.length - 1 ? 'Finish Quiz' : 'Next Question'}</span>
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        )}
+        <AnimatePresence>
+          {quizState.showExplanation && (
+            <motion.button
+              onClick={handleNext}
+              className="flex items-center space-x-2 btn-primary text-lg px-8 py-4"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <span>{quizState.currentQuestion === quiz.length - 1 ? 'Finish Quiz' : 'Next Question'}</span>
+              <ChevronRight className="w-5 h-5" />
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 }

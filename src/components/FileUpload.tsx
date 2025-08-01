@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, FileText, AlertCircle, CheckCircle } from 'lucide-react';
+import { Upload, FileText, AlertCircle, CheckCircle, Brain, Search, Zap } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useApp } from '../contexts/AppContext';
 import { apiService } from '../services/api';
 import { LoadingSpinner } from './LoadingSpinner';
@@ -150,73 +151,116 @@ export function FileUpload() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div
-        {...getRootProps()}
-        className={`
-          relative border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all duration-300
-          ${isDragActive 
-            ? 'border-primary-400 bg-primary-50 dark:bg-primary-900/20' 
-            : 'border-gray-300 dark:border-gray-600 hover:border-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-          }
-          ${isUploading ? 'pointer-events-none' : ''}
-        `}
+    <div className="max-w-4xl mx-auto">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
       >
-        <input {...getInputProps()} />
-        
-        <div className="space-y-4">
-          <div className="flex justify-center">
-            {getStatusIcon()}
-          </div>
+        <div
+          {...getRootProps()}
+          className={`
+            relative border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all duration-300
+            ${isDragActive 
+              ? 'border-primary-400 bg-primary-50 dark:bg-primary-900/20 scale-105' 
+              : 'border-gray-300 dark:border-gray-600 hover:border-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+            }
+            ${isUploading ? 'pointer-events-none' : ''}
+          `}
+        >
+          <input {...getInputProps()} />
           
-          <div>
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              {getStatusText()}
-            </h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              {uploadStatus === 'idle' && (
-                <>
-                  Drag and drop your PDF file here, or click to browse
-                  <br />
-                  <span className="text-sm text-gray-500">Maximum file size: 50MB</span>
-                </>
-              )}
-            </p>
-          </div>
-
-          {isUploading && (
-            <div className="space-y-2">
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div 
-                  className="bg-gradient-to-r from-primary-500 to-primary-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${uploadProgress}%` }}
-                />
-              </div>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                {uploadProgress}% complete
+          <div className="space-y-6">
+            <motion.div 
+              className="flex justify-center"
+              animate={uploadStatus === 'processing' ? { rotate: 360 } : {}}
+              transition={{ duration: 2, repeat: uploadStatus === 'processing' ? Infinity : 0, ease: "linear" }}
+            >
+              {getStatusIcon()}
+            </motion.div>
+            
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                {getStatusText()}
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                {uploadStatus === 'idle' && (
+                  <>
+                    Drag and drop your PDF file here, or click to browse
+                    <br />
+                    <span className="text-sm text-gray-500">Maximum file size: 50MB</span>
+                  </>
+                )}
               </p>
             </div>
-          )}
-        </div>
-      </div>
 
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-          <FileText className="w-8 h-8 text-primary-500 mx-auto mb-2" />
-          <h4 className="font-medium text-gray-900 dark:text-white">Smart Summary</h4>
-          <p className="text-sm text-gray-600 dark:text-gray-300">AI-powered document analysis</p>
+            {isUploading && (
+              <motion.div 
+                className="space-y-3"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                  <motion.div 
+                    className="bg-gradient-to-r from-primary-500 to-primary-600 h-3 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${uploadProgress}%` }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">
+                  {uploadProgress}% complete
+                </p>
+              </motion.div>
+            )}
+          </div>
         </div>
-        <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-          <GraduationCap className="w-8 h-8 text-primary-500 mx-auto mb-2" />
-          <h4 className="font-medium text-gray-900 dark:text-white">Study Materials</h4>
-          <p className="text-sm text-gray-600 dark:text-gray-300">Flashcards, quizzes & Q&A</p>
+      </motion.div>
+
+      <motion.div 
+        className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        <div className="card p-6 text-center card-hover">
+          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <FileText className="w-6 h-6 text-white" />
+          </div>
+          <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Smart Analysis</h4>
+          <p className="text-sm text-gray-600 dark:text-gray-300">AI-powered document analysis with intelligent summaries and key insights</p>
         </div>
-        <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-          <Zap className="w-8 h-8 text-primary-500 mx-auto mb-2" />
-          <h4 className="font-medium text-gray-900 dark:text-white">Discovery</h4>
-          <p className="text-sm text-gray-600 dark:text-gray-300">Research papers & resources</p>
+        
+        <div className="card p-6 text-center card-hover">
+          <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <Brain className="w-6 h-6 text-white" />
+          </div>
+          <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Study Materials</h4>
+          <p className="text-sm text-gray-600 dark:text-gray-300">Interactive flashcards, adaptive quizzes, and personalized Q&A assistance</p>
         </div>
-      </div>
+        
+        <div className="card p-6 text-center card-hover">
+          <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <Search className="w-6 h-6 text-white" />
+          </div>
+          <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Smart Discovery</h4>
+          <p className="text-sm text-gray-600 dark:text-gray-300">Research papers, educational videos, and curated learning resources</p>
+        </div>
+      </motion.div>
+
+      <motion.div 
+        className="mt-8 text-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+      >
+        <div className="inline-flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 rounded-full">
+          <Zap className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+          <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
+            Powered by Advanced AI Technology
+          </span>
+        </div>
+      </motion.div>
     </div>
   );
 }

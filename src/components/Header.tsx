@@ -1,12 +1,24 @@
 import React from 'react';
-import { GraduationCap, Moon, Sun, FileText, Zap } from 'lucide-react';
+import { GraduationCap, Moon, Sun, FileText, Zap, RotateCcw } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
+import { apiService } from '../services/api';
+import toast from 'react-hot-toast';
 
 export function Header() {
   const { state, dispatch } = useApp();
 
   const toggleTheme = () => {
     dispatch({ type: 'TOGGLE_THEME' });
+  };
+
+  const handleNewSession = async () => {
+    try {
+      await apiService.clearSession();
+      dispatch({ type: 'CLEAR_SESSION' });
+      toast.success('Session cleared successfully');
+    } catch (error) {
+      toast.error('Failed to clear session');
+    }
   };
 
   return (
@@ -23,7 +35,7 @@ export function Header() {
                 AI Study Assistant
               </h1>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Enhanced Discovery Edition
+                Professional Edition
               </p>
             </div>
           </div>
@@ -42,18 +54,30 @@ export function Header() {
             </div>
           )}
 
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
-            aria-label="Toggle theme"
-          >
-            {state.theme === 'light' ? (
-              <Moon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-            ) : (
-              <Sun className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+          {/* Controls */}
+          <div className="flex items-center space-x-2">
+            {state.session.active && (
+              <button
+                onClick={handleNewSession}
+                className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
+                title="New Session"
+              >
+                <RotateCcw className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+              </button>
             )}
-          </button>
+            
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
+              title="Toggle Theme"
+            >
+              {state.theme === 'light' ? (
+                <Moon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+              ) : (
+                <Sun className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </header>

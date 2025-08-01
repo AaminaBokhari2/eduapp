@@ -83,3 +83,10 @@ export interface FlashcardState {
   currentCard: number;
   isFlipped: boolean;
 }
+
+export interface ChatMessage {
+  id: string;
+  type: 'user' | 'bot';
+  content: string;
+  timestamp: Date;
+}

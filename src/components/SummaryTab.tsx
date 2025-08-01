@@ -1,5 +1,7 @@
 import React from 'react';
-import { FileText, Clock, BookOpen } from 'lucide-react';
+import { FileText, Clock, BookOpen, TrendingUp } from 'lucide-react';
+import { motion } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
 import { useApp } from '../contexts/AppContext';
 import { LoadingSpinner } from './LoadingSpinner';
 
@@ -28,87 +30,143 @@ export function SummaryTab() {
     );
   }
 
+  const readingTime = state.session.word_count ? Math.ceil(state.session.word_count / 200) : 0;
+
   return (
-    <div className="space-y-6">
+    <motion.div 
+      className="space-y-8"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="card p-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <motion.div 
+          className="card p-6"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+        >
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-              <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+              <FileText className="w-6 h-6 text-white" />
             </div>
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-300">Words</p>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
                 {state.session.word_count?.toLocaleString() || 'N/A'}
               </p>
             </div>
           </div>
-        </div>
+        </motion.div>
         
-        <div className="card p-4">
+        <motion.div 
+          className="card p-6"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-green-600 dark:text-green-400" />
+            <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+              <BookOpen className="w-6 h-6 text-white" />
             </div>
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-300">Pages</p>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
                 {state.session.page_count || 'N/A'}
               </p>
             </div>
           </div>
-        </div>
+        </motion.div>
         
-        <div className="card p-4">
+        <motion.div 
+          className="card p-6"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
+        >
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
-              <Clock className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <Clock className="w-6 h-6 text-white" />
             </div>
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-300">Read Time</p>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                {state.session.word_count ? `${Math.ceil(state.session.word_count / 200)} min` : 'N/A'}
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {readingTime ? `${readingTime} min` : 'N/A'}
               </p>
             </div>
           </div>
-        </div>
+        </motion.div>
+
+        <motion.div 
+          className="card p-6"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, delay: 0.4 }}
+        >
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Complexity</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {readingTime > 10 ? 'High' : readingTime > 5 ? 'Medium' : 'Low'}
+              </p>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
       {/* Summary Content */}
-      <div className="card p-6">
-        <div className="flex items-center space-x-2 mb-4">
-          <FileText className="w-5 h-5 text-primary-500" />
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+      <motion.div 
+        className="card p-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+      >
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
+            <FileText className="w-4 h-4 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
             Intelligent Summary
           </h2>
         </div>
         
-        <div className="prose prose-gray dark:prose-invert max-w-none">
-          <div className="whitespace-pre-wrap text-gray-700 dark:text-gray-300 leading-relaxed">
+        <div className="prose prose-lg prose-gray dark:prose-invert max-w-none">
+          <ReactMarkdown className="text-gray-700 dark:text-gray-300 leading-relaxed">
             {state.summary}
-          </div>
+          </ReactMarkdown>
         </div>
-      </div>
+      </motion.div>
 
       {/* Processing Methods */}
       {state.session.methods_used && state.session.methods_used.length > 0 && (
-        <div className="card p-4">
-          <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+        <motion.div 
+          className="card p-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+        >
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Processing Methods Used
           </h3>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             {state.session.methods_used.map((method, index) => (
-              <span
+              <motion.span
                 key={index}
-                className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full"
+                className="px-3 py-2 bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 text-primary-700 dark:text-primary-300 text-sm rounded-full border border-primary-200 dark:border-primary-700"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, delay: 0.6 + index * 0.1 }}
               >
                 {method}
-              </span>
+              </motion.span>
             ))}
           </div>
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }

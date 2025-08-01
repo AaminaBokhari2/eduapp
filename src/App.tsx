@@ -26,33 +26,6 @@ function AppContent() {
     }
   }, [state.theme]);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Only handle shortcuts when not typing in inputs
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-
-      // Flashcard shortcuts
-      if (state.currentTab === 'flashcards' && state.flashcards.length > 0) {
-        if (e.code === 'Space') {
-          e.preventDefault();
-          // Flip flashcard logic would go here
-        } else if (e.code === 'ArrowLeft') {
-          e.preventDefault();
-          // Previous flashcard logic would go here
-        } else if (e.code === 'ArrowRight') {
-          e.preventDefault();
-          // Next flashcard logic would go here
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [state.currentTab, state.flashcards.length]);
-
   const renderTabContent = () => {
     switch (state.currentTab) {
       case 'summary':
@@ -82,14 +55,14 @@ function AppContent() {
         {!state.session.active ? (
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
-              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-                AI Study Assistant Pro
+              <h1 className="text-5xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent mb-4">
+                AI Study Assistant
               </h1>
-              <p className="text-xl text-gray-600 dark:text-gray-300 mb-2">
-                Enhanced Discovery Edition
+              <p className="text-2xl text-gray-600 dark:text-gray-300 mb-2">
+                Professional Edition
               </p>
-              <p className="text-gray-500 dark:text-gray-400">
-                Upload your PDFs and get comprehensive study materials with advanced AI research discovery
+              <p className="text-lg text-gray-500 dark:text-gray-400">
+                Transform your PDFs into comprehensive study materials with advanced AI technology
               </p>
             </div>
             <FileUpload />
@@ -104,7 +77,7 @@ function AppContent() {
         )}
       </main>
 
-      {state.isLoading && <FullPageLoader text="Processing your document" />}
+      {state.isLoading && <FullPageLoader text="Processing your document with AI" />}
       
       <Toaster
         position="top-right"
@@ -114,6 +87,22 @@ function AppContent() {
             background: state.theme === 'dark' ? '#374151' : '#ffffff',
             color: state.theme === 'dark' ? '#f9fafb' : '#111827',
             border: `1px solid ${state.theme === 'dark' ? '#4b5563' : '#e5e7eb'}`,
+            borderRadius: '12px',
+            padding: '16px',
+            fontSize: '14px',
+            fontWeight: '500',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#ffffff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#ffffff',
+            },
           },
         }}
       />

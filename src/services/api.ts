@@ -1,5 +1,13 @@
 import axios from 'axios';
-import { ProcessingStatus, StudySession, Flashcard, QuizQuestion, ResearchPaper, YouTubeVideo, WebResource } from '../types';
+import type { 
+  ProcessingStatus, 
+  StudySession, 
+  Flashcard, 
+  QuizQuestion, 
+  ResearchPaper, 
+  YouTubeVideo, 
+  WebResource 
+} from '../types';
 
 const API_BASE = 'http://localhost:8000';
 
